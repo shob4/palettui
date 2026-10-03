@@ -14,7 +14,8 @@ func RemEuclid(a, b int) int {
 }
 
 func complement(color hsl) hsl {
-	var newH = RemEuclid(int(color.H+180), 360)
+	var h = int(color.H)
+	var newH = RemEuclid(h + 180, 360)
 	return hsl{
 		H: uint16(newH),
 		S: color.S,
@@ -23,8 +24,9 @@ func complement(color hsl) hsl {
 }
 
 func triad(color hsl) (hsl, hsl) {
-	var left = RemEuclid(int(color.H-120), 360)
-	var right = RemEuclid(int(color.H+120), 360)
+	var h = int(color.H)
+	var left = RemEuclid(h - 120, 360)
+	var right = RemEuclid(h + 120, 360)
 
 	var leftColor = hsl{H: uint16(left), S: color.S, L: color.L}
 	var rightColor = hsl{H: uint16(right), S: color.S, L: color.L}
@@ -32,9 +34,10 @@ func triad(color hsl) (hsl, hsl) {
 }
 
 func square(color hsl) (hsl, hsl, hsl) {
-	var left = RemEuclid(int(color.H-90), 360)
-	var middle = RemEuclid(int(color.H+180), 360)
-	var right = RemEuclid(int(color.H+90), 360)
+	var h = int(color.H)
+	var left = RemEuclid(h - 90, 360)
+	var middle = RemEuclid(h + 180, 360)
+	var right = RemEuclid(h + 90, 360)
 
 	var leftColor = hsl{H: uint16(left), S: color.S, L: color.L}
 	var middleColor = hsl{H: uint16(middle), S: color.S, L: color.L}
@@ -43,8 +46,9 @@ func square(color hsl) (hsl, hsl, hsl) {
 }
 
 func analagous(color hsl) (hsl, hsl) {
-	var left = RemEuclid(int(color.H-30), 360)
-	var right = RemEuclid(int(color.H+30), 360)
+	var h = int(color.H)
+	var left = RemEuclid(h - 30, 360)
+	var right = RemEuclid(h + 30, 360)
 
 	var leftColor = hsl{H: uint16(left), S: color.S, L: color.L}
 	var rightColor = hsl{H: uint16(right), S: color.S, L: color.L}
@@ -57,7 +61,7 @@ func Monochromatic(color hsl) []hsl {
 		monochrome = append(monochrome, hsl{color.H, color.S, l})
 	}
 
-	for l := uint16(50); l <= 1000; l += 50 {
+	for l := uint16(color.L); l <= 1000; l += 50 {
 		monochrome = append(monochrome, hsl{color.H, color.S, l})
 	}
 	return monochrome
