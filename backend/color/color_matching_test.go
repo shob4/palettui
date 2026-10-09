@@ -80,7 +80,10 @@ func TestTriad(t *testing.T) {
 	for _, tt := range tests {
 		testname := fmt.Sprintf("%v, %v, %v", tt.input, tt.expected1, tt.expected2)
 		t.Run(testname, func(t *testing.T) {
-			ans1, ans2 := triad(tt.input)
+			ans1, ans2, err := triad(tt.input)
+			if err != nil {
+				t.Errorf("%s", err)
+			}
 			if !HslIsEqual(ans1, tt.expected1) {
 				t.Errorf("got %v, expected %v", ans1, tt.expected1)
 			} 
@@ -103,9 +106,12 @@ func TestSquare(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		testname := fmt.Sprintf("%v, %v, %v", tt.input, tt.expected1, tt.expected2)
+		testname := fmt.Sprintf("%v, %v, %v, %v", tt.input, tt.expected1, tt.expected2, tt.expected3)
 		t.Run(testname, func(t *testing.T) {
-			ans1, ans2, ans3 := square(tt.input)
+			ans1, ans2, ans3, err := square(tt.input)
+			if err!= nil {
+				t.Errorf("%s", err)
+			}
 			if !HslIsEqual(ans1, tt.expected1) {
 				t.Errorf("got %v, expected %v", ans1, tt.expected1)
 			} 
@@ -118,3 +124,33 @@ func TestSquare(t *testing.T) {
 		})
 	}
 }
+
+func TestAnalagous(t *testing.T) {
+	var tests = []struct {
+		input hsl
+		expected1, expected2 hsl
+	}{
+		{hsl{120, 29, 98}, hsl{90, 29, 98}, hsl{150, 29, 98}},
+		{hsl{200, 29, 98}, hsl{170, 29, 98}, hsl{230, 29, 98}},
+		{hsl{100, 29, 98}, hsl{70, 29, 98}, hsl{130, 29, 98}},
+		{hsl{340, 29, 98}, hsl{310, 29, 98}, hsl{10, 29, 98}},
+		{hsl{20, 29, 98}, hsl{350, 29, 98}, hsl{50, 29, 98}},
+	}
+
+	for _, tt := range tests {
+		testname := fmt.Sprintf("%v, %v, %v", tt.input, tt.expected1, tt.expected2)
+		t.Run(testname, func(t *testing.T) {
+			ans1, ans2, err := analagous(tt.input)
+			if err != nil {
+				t.Errorf("%s", err)
+			}
+			if !HslIsEqual(ans1, tt.expected1) {	
+				t.Errorf("got %v, expected %v", ans1, tt.expected1)
+			} 
+			if !HslIsEqual(ans2, tt.expected2) {
+				t.Errorf("got %v, expected %v", ans2, tt.expected2)
+			}
+		})
+	}
+}
+

@@ -1,6 +1,8 @@
 // Package color provides definitions for color types and algorithms to translate them. May be broken up further
 package color
 
+import "errors"
+
 type rgb struct {
 	R uint8 `json:"r"`
 	G uint8 `json:"g"`
@@ -11,6 +13,20 @@ type hsl struct {
 	H uint16 `json:"h"`
 	S uint16 `json:"s"`
 	L uint16 `json:"l"`
+}
+
+func NewHsl(h, s, l uint16) (hsl, error) {
+	if h > 360 {
+		return hsl{}, errors.New("Invalid hue")
+	}
+	if s > 1000 {
+		return hsl{}, errors.New("Invalid saturation")
+	}
+	if l > 1000 {
+		return hsl{}, errors.New("Invalid luminance: too large")
+	}
+	
+	return hsl{ H: h, S: s, L: l }, nil
 }
 
 type hsb struct {

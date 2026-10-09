@@ -88,7 +88,10 @@ func GetGradientPalette(c *gin.Context, color1 color.Color, color2 color.Color, 
 }
 
 func GetMonochromePalette(c *gin.Context, baseColor color.Color) {
-	var hsls = color.Monochromatic(baseColor.Hsl)
+	var hsls, err = color.Monochromatic(baseColor.Hsl)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, err)
+	}
 	var colors []color.Color
 	for _, oldColor := range hsls {
 		var newColor, err = oldColor.ToColor()
