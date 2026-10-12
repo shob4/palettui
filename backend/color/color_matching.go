@@ -2,6 +2,7 @@ package color
 
 import (
 	"errors"
+	"math"
 	"math/rand/v2"
 )
 
@@ -83,21 +84,39 @@ func analagous(color hsl) (hsl, hsl, error) {
 }
 
 func Monochromatic(color hsl) ([]hsl, error) {
+	// making sure the color is within bounds
+	if _, err := NewHsl(color.H, color.S, color.L); err != nil {
+		return nil, err
+	}
 	var monochrome []hsl
 	for l := uint16(50); l < color.L; l += 50 {
-		monochrome = append(monochrome, hsl{color.H, color.S, l})
+		var newHsl, err = NewHsl(color.H, color.S, l)
+		if err != nil {
+			return []hsl{}, err
+		}
+		monochrome = append(monochrome, newHsl)
 	}
 
 	for l := uint16(color.L); l <= 1000; l += 50 {
-		monochrome = append(monochrome, hsl{color.H, color.S, l})
+		var newHsl, err = NewHsl(color.H, color.S, l)
+		if err != nil {
+			return []hsl{}, err
+		}
+		monochrome = append(monochrome, newHsl)
 	}
 	return monochrome, nil
 }
 
 func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
-	if (color.H > 360 || color2.H > 360) || (color.S > 1000 || color2.S > 1000) || (color.L > 1000 || color2.L > 1000) {
-		var empty []hsl
-		return empty, errors.New("colors not within proper limits")
+	if num == 0 {
+		return []hsl{}, errors.New("cannot create a 0 color gradient")
+	}
+	// making sure the color is within bounds
+	if _, err := NewHsl(color.H, color.S, color.L); err != nil {
+		return []hsl{}, err
+	}
+	if _, err := NewHsl(color2.H, color2.S, color2.L); err != nil {
+		return []hsl{}, err
 	}
 
 	var inum = int32(num)
@@ -139,19 +158,36 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 	return gradient, nil
 }
 
-func nColorAverageComplement(nodes []Color) Color {
-	var h, s, l uint16 = 0, 0, 0
-	for i := range len(nodes) {
-		color := complement(nodes[i].Hsl)
-		h += color.H
-		s += color.S
-		l += color.L
+func nColorAverageComplement(nodes []Color) (Color, error) {
+	if len(nodes) == 0 {
+		return Color{}, errors.New("No colors to complement")
 	}
-	h = h / uint16( len(nodes) )
-	s = s / uint16( len(nodes) )
-	l = l / uint16( len(nodes) )
-	var newColor Color
-	return newColor
+	var s, l uint32 = 0, 0
+	var sinSum, cosSum float64 = 0, 0
+	for _, node := range nodes {
+		color := complement(node.Hsl)
+		radius := float64(color.H) * math.Pi / 180
+		sinSum += math.Sin(radius)
+		cosSum += math.Cos(radius)
+		s += uint32(color.S)
+		l += uint32(color.L)
+	}
+	count := uint32(len(nodes))
+	h := math.Atan2(sinSum, cosSum) * 180 / math.Pi
+	if h < 0 {
+		h += 360
+	}
+	s = s / count
+	l = l / count
+	var newHsl, err = NewHsl(uint16(math.Round(h))%360, uint16(s), uint16(l))
+	if err != nil {
+		return Color{}, err
+	}
+	newColor, err := newHsl.ToColor()
+	if err != nil {
+		return Color{}, err
+	}
+	return newColor, nil
 }
 
 func GenerateColor() (Color, error) {
@@ -211,7 +247,10 @@ func GeneratePalette(num uint) ([]Color, error) {
 			}
 			newPalette = append(newPalette, newColor)
 		case 2:
-			newColor = nColorAverageComplement(newPalette)
+			newColor, err = nColorAverageComplement(newPalette)
+			if err != nil {
+				return []Color{}, err
+			}
 			newPalette = append(newPalette, newColor)
 		case 3:
 			var hsl1, hsl2 hsl
@@ -291,7 +330,10 @@ func GeneratePaletteFromBase(currentPalette []Color, num uint64) ([]Color, error
 			}
 			newPalette = append(newPalette, newColor)
 		case 2:
-			newColor = nColorAverageComplement(currentPalette)
+			newColor, err = nColorAverageComplement(currentPalette)
+			if err != nil {
+				return []Color{}, err
+			}
 			newPalette = append(newPalette, newColor)
 		case 3:
 			var hsl1, hsl2 hsl
