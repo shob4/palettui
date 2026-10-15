@@ -107,9 +107,16 @@ func Monochromatic(color hsl) ([]hsl, error) {
 	return monochrome, nil
 }
 
+func divRound(n, d int64) int64 {
+	if n < 0 {
+		return -((-n + d/2) / d)
+	}
+	return (n + d/2) / d
+}
+
 func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
-	if num == 0 {
-		return []hsl{}, errors.New("cannot create a 0 color gradient")
+	if num < 2 {
+		return []hsl{}, errors.New("gradients must have at least 2 colors")
 	}
 	// making sure the color is within bounds
 	if _, err := NewHsl(color.H, color.S, color.L); err != nil {
@@ -119,41 +126,35 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 		return []hsl{}, err
 	}
 
-	var inum = int32(num)
+	// var inum = int64(num)
 	var gradient = make([]hsl, 0, num)
-	var hue int32
+	gradient = append(gradient, color)
 
+	startHue, endHue := int64(color.H), int64(color2.H)
 	if color.S == 0 {
-		hue = int32(color2.H)
-	} else {
-		hue = int32(color.H)
+		startHue = endHue
+	} else if color2.S == 0 {
+		endHue = startHue
 	}
 
-	var h = hue
-	var s = int32(color.S)
-	var l = int32(color.L)
-
-	var endH = int32(color2.H)
-	var sInterval = (int32(color2.S) - s) / inum
-	var lInterval = (int32(color2.L) - l) / inum
-	var hDifference = endH - h
-
-	var hInterval int32
-	if hDifference > 180 {
-		hInterval = -(360 - hDifference) / inum
-	} else if hDifference < -180 {
-		hInterval = (360 + hDifference) / inum
-	} else {
-		hInterval = hDifference / inum
+	distanceHue := endHue - startHue
+	if distanceHue > 180 {
+		distanceHue -= 360
+	} else if distanceHue < -180 {
+		distanceHue += 360
 	}
 
-	for range inum {
-		h = int32(RemEuclid(int(h+hInterval), 360))
-		s = s + sInterval
-		l = l + lInterval
+	steps := int64(num) - 1
+	distanceSaturation := int64(color2.S) - int64(color.S)
+	distanceLightness := int64(color2.L) - int64(color.L)
 
+	for i := int64(1); i < steps; i++ {
+		h := RemEuclid(int(startHue+divRound(distanceHue*i, steps)), 360)
+		s := int64(color.S) + divRound(distanceSaturation*i, steps)
+		l := int64(color.L) + divRound(distanceLightness*i, steps)
 		gradient = append(gradient, hsl{uint16(h), uint16(s), uint16(l)})
 	}
+	gradient = append(gradient, color2)
 
 	return gradient, nil
 }

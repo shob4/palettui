@@ -282,17 +282,17 @@ func TestGradient(t *testing.T) {
 		num      uint32
 		expected []hsl
 	}{
-		{"linear lightness", hsl{100, 500, 200}, hsl{100, 500, 600}, 4,
-			[]hsl{{100, 500, 300}, {100, 500, 400}, {100, 500, 500}, {100, 500, 600}}},
-		{"saturation and lightness together", hsl{50, 0, 1000}, hsl{50, 400, 0}, 2,
-			[]hsl{{50, 200, 500}, {50, 400, 0}}}, // S from 0 so hue comes from color2 (also 50)
-		{"hue wraps upward", hsl{350, 500, 500}, hsl{10, 500, 500}, 2,
-			[]hsl{{0, 500, 500}, {10, 500, 500}}},
-		{"hue wraps downward", hsl{10, 500, 500}, hsl{350, 500, 500}, 2,
-			[]hsl{{0, 500, 500}, {350, 500, 500}}},
-		{"grey start takes end hue", hsl{0, 0, 500}, hsl{120, 0, 500}, 3,
-			[]hsl{{120, 0, 500}, {120, 0, 500}, {120, 0, 500}}},
-		{"single step", hsl{100, 500, 200}, hsl{100, 500, 600}, 1,
+		{"linear lightness", hsl{100, 500, 200}, hsl{100, 500, 600}, 5,
+			[]hsl{{100, 500, 200}, {100, 500, 300}, {100, 500, 400}, {100, 500, 500}, {100, 500, 600}}},
+		{"saturation and lightness together", hsl{50, 0, 1000}, hsl{50, 400, 0}, 3,
+			[]hsl{{50, 0, 1000}, {50, 200, 500}, {50, 400, 0}}}, // S from 0 so hue comes from color2 (also 50)
+		{"hue wraps upward", hsl{350, 500, 500}, hsl{10, 500, 500}, 3,
+			[]hsl{{350, 500, 500}, {0, 500, 500}, {10, 500, 500}}},
+		{"hue wraps downward", hsl{10, 500, 500}, hsl{350, 500, 500}, 3,
+			[]hsl{{10, 500, 500}, {0, 500, 500}, {350, 500, 500}}},
+		{"grey start takes end hue", hsl{0, 0, 500}, hsl{120, 0, 500}, 4,
+			[]hsl{{0, 0, 500}, {120, 0, 500}, {120, 0, 500}, {120, 0, 500}}},
+		{"single step", hsl{100, 500, 200}, hsl{100, 500, 600}, 3,
 			[]hsl{{100, 500, 600}}},
 		{"truncated interval stops short", hsl{100, 500, 0}, hsl{100, 500, 1000}, 3,
 			[]hsl{{100, 500, 333}, {100, 500, 666}, {100, 500, 999}}},
@@ -304,7 +304,7 @@ func TestGradient(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if !slices.Equal(got, tt.expected) {
-				t.Errorf("got %v, expected %v", got,  tt.expected)
+				t.Errorf("got %v, expected %v", got, tt.expected)
 			}
 		})
 	}

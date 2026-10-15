@@ -15,6 +15,12 @@ type hsl struct {
 	L uint16 `json:"l"`
 }
 
+type oklch struct {
+	L float64
+	C float64
+	H float64
+}
+
 func NewHsl(h, s, l uint16) (hsl, error) {
 	if h > 360 {
 		return hsl{}, errors.New("Invalid hue")
