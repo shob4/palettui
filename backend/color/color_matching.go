@@ -164,7 +164,7 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 	distanceChroma := end.C - start.C
 	distanceLightness := end.L - start.L
 
-	for i := uint32(1); i < num - 1; i++ {
+	for i := uint32(1); i < num-1; i++ {
 		t := float64(i) / steps
 		gradient = append(gradient, OklchToHsl(oklch{
 			L: start.L + distanceLightness*t,
@@ -222,13 +222,13 @@ func GenerateColor() (Color, error) {
 
 func GeneratePalette(num uint) ([]Color, error) {
 	if num <= 0 {
-		return []Color{}, errors.New("no numbers to generate")
+		return nil, errors.New("no numbers to generate")
 	}
 
 	var newPalette = make([]Color, 0, num)
 	var newColor, err = GenerateColor()
 	if err != nil {
-		return []Color{}, err
+		return nil, err
 	}
 	var i uint = 1
 	newPalette = append(newPalette, newColor)
@@ -246,64 +246,64 @@ func GeneratePalette(num uint) ([]Color, error) {
 		var index = rand.IntN(len(newPalette))
 		switch method {
 		case 0:
-			newColor, err = complement(newPalette[index].Hsl).ToColor()
+			newPalette, err = addDistinct(newPalette, complement(newPalette[index].Hsl))
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
 		case 1:
 			newColor, err = GenerateColor()
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
+			newPalette, err = addDistinct(newPalette, newColor.Hsl)
+			if err != nil {
+				return nil, err
+			}
 		case 2:
 			newColor, err = nColorAverageComplement(newPalette)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
+			newPalette, err = addDistinct(newPalette, newColor.Hsl)
+			if err != nil {
+				return nil, err
+			}
 		case 3:
 			var hsl1, hsl2 hsl
 			hsl1, hsl2, err = triad(newPalette[index].Hsl)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newColor, err = hsl1.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl1)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
-			newColor, err = hsl2.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl2)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
 			i += 1
 		case 4:
 			var hsl1, hsl2, hsl3 hsl
 			hsl1, hsl2, hsl3, err = square(newPalette[index].Hsl)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newColor, err = hsl1.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl1)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
-			newColor, err = hsl2.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl2)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
-			newColor, err = hsl3.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl3)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
 			i += 2
 		default:
-			return []Color{}, errors.New("generate palette generated an invalid number")
+			return nil, errors.New("generate palette generated an invalid number")
 		}
 		i += 1
 	}
@@ -329,66 +329,101 @@ func GeneratePaletteFromBase(currentPalette []Color, num uint64) ([]Color, error
 
 		switch method {
 		case 0:
-			newColor, err = complement(currentPalette[index].Hsl).ToColor()
+			newPalette, err = addDistinct(newPalette, complement(newPalette[index].Hsl))
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
 		case 1:
 			newColor, err = GenerateColor()
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
+			newPalette, err = addDistinct(newPalette, newColor.Hsl)
+			if err != nil {
+				return nil, err
+			}
 		case 2:
 			newColor, err = nColorAverageComplement(currentPalette)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
+			newPalette, err = addDistinct(newPalette, newColor.Hsl)
+			if err != nil {
+				return nil, err
+			}
 		case 3:
 			var hsl1, hsl2 hsl
 			hsl1, hsl2, err = triad(currentPalette[index].Hsl)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newColor, err = hsl1.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl1)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
-			newColor, err = hsl2.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl2)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
 			i += 1
 		case 4:
 			var hsl1, hsl2, hsl3 hsl
 			hsl1, hsl2, hsl3, err = square(currentPalette[index].Hsl)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newColor, err = hsl1.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl1)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
-			newColor, err = hsl2.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl2)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
-			newColor, err = hsl3.ToColor()
+			newPalette, err = addDistinct(newPalette, hsl3)
 			if err != nil {
-				return []Color{}, err
+				return nil, err
 			}
-			newPalette = append(newPalette, newColor)
 			i += 2
 		default:
-			return []Color{}, errors.New("generate palette from base generated an invalid random number")
+			return nil, errors.New("generate palette from base generated an invalid random number")
 		}
 		i += 1
 	}
 	return newPalette, nil
+}
+
+func clampInt(v, lo, hi int) int { return max(lo, min(hi, v)) }
+
+func jitter(c hsl) hsl {
+	h := (int(c.H) + rand.IntN(31) - 15 + 360) % 360
+	s := clampInt(int(c.S) + rand.IntN(301)-150, 0, 1000)
+	l := clampInt(int(c.L) + rand.IntN(341)-170, 0, 1000)
+	return hsl{H: uint16(h), S: uint16(s), L: uint16(l)}
+}
+
+const minDistance = 3000
+
+func farEnough(palette []Color, c Color) bool {
+	for _, p := range palette {
+		if threeNodeDistance(p.Rgb, c.Rgb) < minDistance {
+			return false
+		}
+	}
+	return true
+}
+
+func addDistinct(palette []Color, base hsl) ([]Color, error) {
+	var last Color
+	for range 6 {
+		c, err := jitter(base).ToColor()
+		if err != nil {
+			return nil, err
+		}
+		last = c
+		if farEnough(palette, c) {
+			return append(palette, c), nil
+		}
+	}
+	return append(palette, last), nil
 }
