@@ -29,28 +29,23 @@ func (r rgb) Convert() (Color, error) {
 	} else {
 		return Color{}, errors.New("c_max does not match r, g, or b")
 	}
+	if h < 0 {
+		h += 360.0
+	}
 
 	var s float64
 	if delta == 0.0 {
 		s = 0.0
 	} else {
-		s = delta / math.Abs(1.0-(2.0*(1/1000.0)-1.0))
+		lNormalized := l / 1000.0
+		deltaNormalized := delta / 1000.0
+		s = deltaNormalized / (1.0 - math.Abs(2.0*lNormalized-1.0) ) * 1000.0
 	}
 
 	var hsl = hsl{
 		H: uint16(h),
 		S: uint16(s),
 		L: uint16(l),
-	}
-
-	if int32(math.Round(cMax)) == int32(math.Round(red)) {
-		h = 60.0 * math.Mod((green-blue)/delta, 6.0)
-	} else if int32(math.Round(cMax)) == int32(math.Round(green)) {
-		h = 60.0 * ((blue-red)/delta + 2.0)
-	} else if int32(math.Round(cMax)) == int32(math.Round(blue)) {
-		h = 60.0 * ((red-green)/delta + 4.0)
-	} else {
-		h = 0.0
 	}
 
 	if cMax == 0.0 {

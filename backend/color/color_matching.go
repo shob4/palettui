@@ -225,21 +225,13 @@ func GeneratePalette(num uint) ([]Color, error) {
 		return []Color{}, errors.New("no numbers to generate")
 	}
 
-	var newPalette = make([]Color, num)
+	var newPalette = make([]Color, 0, num)
 	var newColor, err = GenerateColor()
 	if err != nil {
 		return []Color{}, err
 	}
 	var i uint = 1
 	newPalette = append(newPalette, newColor)
-	if i < num {
-		newColor, err = complement(newPalette[0].Hsl).ToColor()
-		if err != nil {
-			return []Color{}, err
-		}
-		newPalette = append(newPalette, newColor)
-		i += 1
-	}
 
 	for i < num {
 		var method int
