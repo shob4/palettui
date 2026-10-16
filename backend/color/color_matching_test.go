@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"testing"
+	"math"
 )
 
 func HslIsEqual(color1, color2 hsl) bool {
@@ -275,37 +276,49 @@ func TestMonochromaticErrors(t *testing.T) {
 	}
 }
 
-func TestGradient(t *testing.T) {
-	var tests = []struct {
-		name     string
-		a, b     hsl
-		num      uint32
-		expected []hsl
+func TestGradientOklch(t *testing.T) {
+	cases := []struct {
+		name string
+		a, b hsl
 	}{
-		{"linear lightness", hsl{100, 500, 200}, hsl{100, 500, 600}, 5,
-			[]hsl{{100, 500, 200}, {100, 500, 300}, {100, 500, 400}, {100, 500, 500}, {100, 500, 600}}},
-		{"saturation and lightness together", hsl{50, 0, 1000}, hsl{50, 400, 0}, 3,
-			[]hsl{{50, 0, 1000}, {50, 200, 500}, {50, 400, 0}}}, // S from 0 so hue comes from color2 (also 50)
-		{"hue wraps upward", hsl{350, 500, 500}, hsl{10, 500, 500}, 3,
-			[]hsl{{350, 500, 500}, {0, 500, 500}, {10, 500, 500}}},
-		{"hue wraps downward", hsl{10, 500, 500}, hsl{350, 500, 500}, 3,
-			[]hsl{{10, 500, 500}, {0, 500, 500}, {350, 500, 500}}},
-		{"grey start takes end hue", hsl{0, 0, 500}, hsl{120, 0, 500}, 4,
-			[]hsl{{0, 0, 500}, {120, 0, 500}, {120, 0, 500}, {120, 0, 500}}},
-		{"single step", hsl{100, 500, 200}, hsl{100, 500, 600}, 3,
-			[]hsl{{100, 500, 600}}},
-		{"truncated interval stops short", hsl{100, 500, 0}, hsl{100, 500, 1000}, 3,
-			[]hsl{{100, 500, 333}, {100, 500, 666}, {100, 500, 999}}},
+		{"red to blue", hsl{0, 1000, 500}, hsl{240, 1000, 500}},
+		{"white to blue", hsl{0, 0, 1000}, hsl{240, 1000, 500}},
+		{"black to yellow", hsl{0, 0, 0}, hsl{60, 1000, 500}},
+		{"hue wraps", hsl{350, 800, 500}, hsl{10, 800, 500}},
 	}
-	for _, tt := range tests {
+	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Gradient(tt.a, tt.b, tt.num)
+			got, err := Gradient(tt.a, tt.b, 7)
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatal(err)
 			}
-			if !slices.Equal(got, tt.expected) {
-				t.Errorf("got %v, expected %v", got, tt.expected)
+			if len(got) != 7 || got[0] != tt.a || got[6] != tt.b {
+				t.Fatalf("bad length or endpoints: %v", got)
+			}
+			// checking perceptual light changes with 0.01 tolerance
+			start, end := HslToOklch(tt.a).L, HslToOklch(tt.b).L
+			dir := 1.0
+			if end < start {
+				dir = -1
+			}
+			prev := start
+			for i, color := range got {
+				l := HslToOklch(color).L
+				if (l-prev)*dir < -0.01 {
+					t.Errorf("lightness not montonic at %d: %v -> %v", i, prev, l)
+				}
+				prev = l
 			}
 		})
+	}
+}
+
+func TestGradientGreyStartKeepsEndHue(t *testing.T) {
+	got, _ := Gradient(hsl{0, 0, 1000}, hsl{240, 1000, 500}, 5)
+	for _, c := range got[1 : len(got)-1] {
+		ok := HslToOklch(c)
+		if ok.C > 0.02 && math.Abs(ok.H - HslToOklch(hsl{240, 1000, 500}).H) > 5 {
+			t.Errorf("hue drifted from blue endpoint: %v (oklch %+v)", c, ok)
+		}
 	}
 }

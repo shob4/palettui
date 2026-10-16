@@ -14,6 +14,14 @@ func RemEuclid(a, b int) int {
 	return rem
 }
 
+func RemEuclidFloat(a, b float64) float64 {
+	var rem = math.Mod(a, b)
+	if rem < 0 {
+		return b + rem
+	}
+	return rem
+}
+
 func complement(color hsl) hsl {
 	var h = int(color.H)
 	var newH = RemEuclid(h+180, 360)
@@ -92,7 +100,7 @@ func Monochromatic(color hsl) ([]hsl, error) {
 	for l := uint16(50); l < color.L; l += 50 {
 		var newHsl, err = NewHsl(color.H, color.S, l)
 		if err != nil {
-			return []hsl{}, err
+			return nil, err
 		}
 		monochrome = append(monochrome, newHsl)
 	}
@@ -100,7 +108,7 @@ func Monochromatic(color hsl) ([]hsl, error) {
 	for l := uint16(color.L); l <= 1000; l += 50 {
 		var newHsl, err = NewHsl(color.H, color.S, l)
 		if err != nil {
-			return []hsl{}, err
+			return nil, err
 		}
 		monochrome = append(monochrome, newHsl)
 	}
@@ -114,26 +122,34 @@ func divRound(n, d int64) int64 {
 	return (n + d/2) / d
 }
 
+func divRoundFloat(n, d float64) float64 {
+	if n < 0 {
+		return -((-n + d/2) / d)
+	}
+	return (n + d/2) / d
+}
+
 func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 	if num < 2 {
-		return []hsl{}, errors.New("gradients must have at least 2 colors")
+		return nil, errors.New("gradients must have at least 2 colors")
 	}
 	// making sure the color is within bounds
 	if _, err := NewHsl(color.H, color.S, color.L); err != nil {
-		return []hsl{}, err
+		return nil, err
 	}
 	if _, err := NewHsl(color2.H, color2.S, color2.L); err != nil {
-		return []hsl{}, err
+		return nil, err
 	}
 
-	// var inum = int64(num)
+	const greyChroma = 1e-3
 	var gradient = make([]hsl, 0, num)
+	var start, end = HslToOklch(color), HslToOklch(color2)
 	gradient = append(gradient, color)
 
-	startHue, endHue := int64(color.H), int64(color2.H)
-	if color.S == 0 {
+	startHue, endHue := start.H, end.H
+	if start.C == greyChroma {
 		startHue = endHue
-	} else if color2.S == 0 {
+	} else if end.C == greyChroma {
 		endHue = startHue
 	}
 
@@ -144,15 +160,17 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 		distanceHue += 360
 	}
 
-	steps := int64(num) - 1
-	distanceSaturation := int64(color2.S) - int64(color.S)
-	distanceLightness := int64(color2.L) - int64(color.L)
+	steps := float64(num - 1)
+	distanceChroma := end.C - start.C
+	distanceLightness := end.L - start.L
 
-	for i := int64(1); i < steps; i++ {
-		h := RemEuclid(int(startHue+divRound(distanceHue*i, steps)), 360)
-		s := int64(color.S) + divRound(distanceSaturation*i, steps)
-		l := int64(color.L) + divRound(distanceLightness*i, steps)
-		gradient = append(gradient, hsl{uint16(h), uint16(s), uint16(l)})
+	for i := uint32(1); i < num - 1; i++ {
+		t := float64(i) / steps
+		gradient = append(gradient, OklchToHsl(oklch{
+			L: start.L + distanceLightness*t,
+			C: start.C + distanceChroma*t,
+			H: RemEuclidFloat(startHue+distanceHue*t, 360),
+		}))
 	}
 	gradient = append(gradient, color2)
 
