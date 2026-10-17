@@ -310,26 +310,42 @@ func GeneratePalette(num uint) ([]Color, error) {
 	return newPalette, nil
 }
 
-func GeneratePaletteFromBase(currentPalette []Color, num uint64) ([]Color, error) {
-	var newPalette = make([]Color, num)
-	var inum = int(num)
-	var i = 1
+func GeneratePaletteFromBase(currentPalette []Color) ([]Color, error) {
+	// find out how many locked there are
+	// subtract locked from number
+	// create new array for base?
+	// copy new array into old array
+	var inum = len(currentPalette)
+	if inum < 2 {
+		return nil, errors.New("palette must be at least 2")
+	}
+	var newPalette = make([]Color, 0, inum)
+	for _, color := range currentPalette {
+		if color.Locked {
+			newPalette = append(newPalette, color)
+		}
+	}
+	locked := len(newPalette)
+	basePalette := make([]Color, locked)
+	copy(basePalette, newPalette)
+
 	var newColor Color
 	var err error
-	for i < inum {
+	for len(newPalette) < inum {
+		remaining := inum - len(newPalette)
 		var method int
-		if inum-i < 2 {
+		if remaining < 2 {
 			method = rand.IntN(3)
-		} else if inum-i < 3 {
+		} else if remaining < 3 {
 			method = rand.IntN(4)
 		} else {
 			method = rand.IntN(5)
 		}
-		var index = rand.IntN(len(currentPalette))
+		var base = basePalette[ rand.IntN(locked) ]
 
 		switch method {
 		case 0:
-			newPalette, err = addDistinct(newPalette, complement(newPalette[index].Hsl))
+			newPalette, err = addDistinct(newPalette, complement(base.Hsl))
 			if err != nil {
 				return nil, err
 			}
@@ -353,7 +369,7 @@ func GeneratePaletteFromBase(currentPalette []Color, num uint64) ([]Color, error
 			}
 		case 3:
 			var hsl1, hsl2 hsl
-			hsl1, hsl2, err = triad(currentPalette[index].Hsl)
+			hsl1, hsl2, err = triad(base.Hsl)
 			if err != nil {
 				return nil, err
 			}
@@ -365,10 +381,9 @@ func GeneratePaletteFromBase(currentPalette []Color, num uint64) ([]Color, error
 			if err != nil {
 				return nil, err
 			}
-			i += 1
 		case 4:
 			var hsl1, hsl2, hsl3 hsl
-			hsl1, hsl2, hsl3, err = square(currentPalette[index].Hsl)
+			hsl1, hsl2, hsl3, err = square(base.Hsl)
 			if err != nil {
 				return nil, err
 			}
@@ -384,13 +399,21 @@ func GeneratePaletteFromBase(currentPalette []Color, num uint64) ([]Color, error
 			if err != nil {
 				return nil, err
 			}
-			i += 2
 		default:
 			return nil, errors.New("generate palette from base generated an invalid random number")
 		}
-		i += 1
 	}
-	return newPalette, nil
+	result := make([]Color, inum)
+	next := locked
+	for index, color := range currentPalette {
+		if color.Locked {
+			result[index] = color
+			continue
+		}
+		result[index] = newPalette[next]
+		next++
+	}
+	return result, nil
 }
 
 func clampInt(v, lo, hi int) int { return max(lo, min(hi, v)) }
@@ -402,7 +425,7 @@ func jitter(c hsl) hsl {
 	return hsl{H: uint16(h), S: uint16(s), L: uint16(l)}
 }
 
-const minDistance = 3000
+const minDistance = 300
 
 func farEnough(palette []Color, c Color) bool {
 	for _, p := range palette {
