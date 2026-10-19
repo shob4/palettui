@@ -61,7 +61,7 @@ func (r rgb) Convert() (Color, error) {
 		B: uint16(b),
 	}
 
-	var hex = hex{
+	var hex = Hex{
 		H: uint32(r.R)<<16 | uint32(r.G)<<8 | uint32(r.B),
 	}
 
@@ -210,7 +210,7 @@ func (hsb hsb) ToColor() (Color, error) {
 	return newColor, nil
 }
 
-func (h hex) ToRgb() rgb {
+func (h Hex) ToRgb() rgb {
 	var r = uint8((h.H >> 16) & 0xff)
 	var g = uint8((h.H >> 8) & 0xff)
 	var b = uint8(h.H & 0xff)

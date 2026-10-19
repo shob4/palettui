@@ -31,8 +31,8 @@ func NewHsl(h, s, l uint16) (hsl, error) {
 	if l > 1000 {
 		return hsl{}, errors.New("Invalid luminance: too large")
 	}
-	
-	return hsl{ H: h, S: s, L: l }, nil
+
+	return hsl{H: h, S: s, L: l}, nil
 }
 
 type hsb struct {
@@ -41,7 +41,7 @@ type hsb struct {
 	B uint16 `json:"b"`
 }
 
-type hex struct {
+type Hex struct {
 	H uint32 `json:"h"`
 }
 
@@ -53,13 +53,22 @@ type Color struct {
 	Rgb    rgb  `json:"rgb"`
 	Hsl    hsl  `json:"hsl"`
 	Hsb    hsb  `json:"hsb"`
-	Hex    hex  `json:"hex"`
+	Hex    Hex  `json:"hex"`
 	Name   name `json:"name"`
 	Locked bool `json:"locked"`
 }
 
+// type Kind string
+//
+// const (
+// 	KindPalette Kind = "palette"
+// 	KindGradient Kind = "gradient"
+// 	KindMonochrome Kind = "monochrome"
+// )
+//
 type Palette struct {
-	Colors []Color `json:"color_list"`
-	ID     uint64 `json:"id"`
-	PaletteName   string `json:"palette_name"`
+	Colors      []Color `json:"color_list"`
+	ID          uint64  `json:"id"`
+	PaletteName string  `json:"palette_name"`
+	// Kind        Kind  `json:"kind"`
 }

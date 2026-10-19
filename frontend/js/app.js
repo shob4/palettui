@@ -1,6 +1,7 @@
-import { createPalette, createPaletteFromBase } from './api.js'
+import { createPalette, createPaletteFromBase, createGradient } from './api.js'
 
 let currentColors = [];
+let currentGradient = [];
 
 document.getElementById('generate-btn').addEventListener('click', async() => {
     try {
@@ -22,6 +23,42 @@ document.getElementById('generate-btn').addEventListener('click', async() => {
         console.error(err);
     }
 });
+
+document.getElementById('generate-gradient').addEventListener('click', async() => {
+    try {
+        const color1 = document.getElementById('first-color');
+        const color2 = document.getElementById('second-color');
+        const numColors = document.getElementById('num-colors');
+
+        const palette = await createGradient(color1.value, color2.value, Number( numColors.value ));
+
+        if (!Array.isArray(palette.color_list)) {
+            throw new Error('Response missing color_list: ' + JSON.stringify(palette))
+        }
+
+        currentGradient = palette.color_list;
+        renderGradient(currentGradient);
+    } catch (err) {
+        console.error(err);
+    }
+})
+
+function renderGradient(colors) {
+    const container = document.getElementById('palette');
+    container.innerHTML = ''; // clear swatches
+    colors.forEach((c, i) => {
+        const item = document.createElement('div');
+        item.className = 'palette-item';
+
+        const swatch = document.createElement('div');
+        swatch.className = 'swatch';
+        swatch.style.backgroundColor = `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`;
+        swatch.title = c.name.name; 
+
+        item.append(swatch)
+        container.appendChild(item);
+    });
+}
 
 function renderPalette(colors) {
     const container = document.getElementById('palette');

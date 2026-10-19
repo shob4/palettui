@@ -130,8 +130,8 @@ func divRoundFloat(n, d float64) float64 {
 }
 
 func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
-	if num < 2 {
-		return nil, errors.New("gradients must have at least 2 colors")
+	if num < 1 {
+		return nil, errors.New("gradients must have at least 1 step")
 	}
 	// making sure the color is within bounds
 	if _, err := NewHsl(color.H, color.S, color.L); err != nil {
@@ -142,7 +142,7 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 	}
 
 	const greyChroma = 1e-3
-	var gradient = make([]hsl, 0, num)
+	var gradient = make([]hsl, 0, num + 2)
 	var start, end = HslToOklch(color), HslToOklch(color2)
 	gradient = append(gradient, color)
 
@@ -160,11 +160,11 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 		distanceHue += 360
 	}
 
-	steps := float64(num - 1)
+	steps := float64(num)
 	distanceChroma := end.C - start.C
 	distanceLightness := end.L - start.L
 
-	for i := uint32(1); i < num-1; i++ {
+	for i := range num {
 		t := float64(i) / steps
 		gradient = append(gradient, OklchToHsl(oklch{
 			L: start.L + distanceLightness*t,
@@ -311,10 +311,6 @@ func GeneratePalette(num uint) ([]Color, error) {
 }
 
 func GeneratePaletteFromBase(currentPalette []Color) ([]Color, error) {
-	// find out how many locked there are
-	// subtract locked from number
-	// create new array for base?
-	// copy new array into old array
 	var inum = len(currentPalette)
 	if inum < 2 {
 		return nil, errors.New("palette must be at least 2")

@@ -24,6 +24,7 @@ func main() {
 	router.GET("/palette/:id", api.GetPaletteByName)
 	router.GET("/palette/create", api.GetCreatePalette)
 	router.POST("/palette/create-from-base", api.GetRandomizePalette)
+	router.POST("/palette/gradient", api.GetGradientPalette)
 	router.POST("/palette", api.PostPalette)
 	router.Run("localhost:8080")
 }
