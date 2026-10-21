@@ -97,7 +97,7 @@ func Monochromatic(color hsl) ([]hsl, error) {
 		return nil, err
 	}
 	var monochrome []hsl
-	for l := uint16(50); l < color.L; l += 50 {
+	for l := ( color.L % 100 ); l < color.L; l += 100 {
 		var newHsl, err = NewHsl(color.H, color.S, l)
 		if err != nil {
 			return nil, err
@@ -105,7 +105,7 @@ func Monochromatic(color hsl) ([]hsl, error) {
 		monochrome = append(monochrome, newHsl)
 	}
 
-	for l := uint16(color.L); l <= 1000; l += 50 {
+	for l := uint16(color.L); l <= 1000; l += 100 {
 		var newHsl, err = NewHsl(color.H, color.S, l)
 		if err != nil {
 			return nil, err
@@ -142,7 +142,7 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 	}
 
 	const greyChroma = 1e-3
-	var gradient = make([]hsl, 0, num + 2)
+	var gradient = make([]hsl, 0, num+2)
 	var start, end = HslToOklch(color), HslToOklch(color2)
 	gradient = append(gradient, color)
 
@@ -160,11 +160,11 @@ func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 		distanceHue += 360
 	}
 
-	steps := float64(num)
+	steps := float64(num + 1)
 	distanceChroma := end.C - start.C
 	distanceLightness := end.L - start.L
 
-	for i := range num {
+	for i := 1; i <= int(num); i++ {
 		t := float64(i) / steps
 		gradient = append(gradient, OklchToHsl(oklch{
 			L: start.L + distanceLightness*t,
@@ -337,7 +337,7 @@ func GeneratePaletteFromBase(currentPalette []Color) ([]Color, error) {
 		} else {
 			method = rand.IntN(5)
 		}
-		var base = basePalette[ rand.IntN(locked) ]
+		var base = basePalette[rand.IntN(locked)]
 
 		switch method {
 		case 0:
@@ -416,8 +416,8 @@ func clampInt(v, lo, hi int) int { return max(lo, min(hi, v)) }
 
 func jitter(c hsl) hsl {
 	h := (int(c.H) + rand.IntN(31) - 15 + 360) % 360
-	s := clampInt(int(c.S) + rand.IntN(301)-150, 0, 1000)
-	l := clampInt(int(c.L) + rand.IntN(341)-170, 0, 1000)
+	s := clampInt(int(c.S)+rand.IntN(301)-150, 0, 1000)
+	l := clampInt(int(c.L)+rand.IntN(341)-170, 0, 1000)
 	return hsl{H: uint16(h), S: uint16(s), L: uint16(l)}
 }
 

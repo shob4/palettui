@@ -1,22 +1,32 @@
-import { createPalette, createPaletteFromBase, createGradient } from './api.js'
+import { createPalette, createPaletteFromBase, createGradient, createMonochrome } from './api.js'
+
+const MAX_CACHED = 50;
+const shadeCache = new Map();
 
 let currentColors = [];
 let currentGradient = [];
 
-document.getElementById('generate-btn').addEventListener('click', async() => {
+function cacheShades(key, shades) {
+    shadeCache.delete(key);
+    shadeCache.set(key, shades);
+    if (shadeCache.size > MAX_CACHED) {
+        const oldest = shadeCache.keys().next().value;
+        shadeCache.delete(oldest);
+    }
+}
+
+document.getElementById('generate-btn').addEventListener('click', async () => {
     try {
         const locked = currentColors.filter(c => c.locked);
 
-        console.log('from-site request: ', currentColors)
         const palette = locked.length > 0
             ? await createPaletteFromBase(currentColors)
             : await createPalette();
-        console.log('from-base response: ', palette);
 
         if (!Array.isArray(palette.color_list)) {
             throw new Error('Response missing color_list: ' + JSON.stringify(palette))
         }
-        
+
         currentColors = palette.color_list;
         renderPalette(currentColors);
     } catch (err) {
@@ -24,13 +34,13 @@ document.getElementById('generate-btn').addEventListener('click', async() => {
     }
 });
 
-document.getElementById('generate-gradient').addEventListener('click', async() => {
+document.getElementById('generate-gradient').addEventListener('click', async () => {
     try {
         const color1 = document.getElementById('first-color');
         const color2 = document.getElementById('second-color');
         const numColors = document.getElementById('num-colors');
 
-        const palette = await createGradient(color1.value, color2.value, Number( numColors.value ));
+        const palette = await createGradient(color1.value, color2.value, Number(numColors.value));
 
         if (!Array.isArray(palette.color_list)) {
             throw new Error('Response missing color_list: ' + JSON.stringify(palette))
@@ -44,16 +54,19 @@ document.getElementById('generate-gradient').addEventListener('click', async() =
 })
 
 function renderGradient(colors) {
-    const container = document.getElementById('palette');
+    const container = document.getElementById('gradient');
     container.innerHTML = ''; // clear swatches
     colors.forEach((c, i) => {
+        if (!c.locked) {
+            shadeCache[i] = [];
+        }
         const item = document.createElement('div');
         item.className = 'palette-item';
 
         const swatch = document.createElement('div');
         swatch.className = 'swatch';
         swatch.style.backgroundColor = `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`;
-        swatch.title = c.name.name; 
+        swatch.title = c.name.name;
 
         item.append(swatch)
         container.appendChild(item);
@@ -70,7 +83,7 @@ function renderPalette(colors) {
         const swatch = document.createElement('div');
         swatch.className = 'swatch';
         swatch.style.backgroundColor = `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`;
-        swatch.title = c.name.name; 
+        swatch.title = c.name.name;
 
         const lock = document.createElement('button');
         lock.className = 'lock';
@@ -82,8 +95,52 @@ function renderPalette(colors) {
             item.classList.toggle('locked', currentColors[i].locked);
         });
 
+        const shadeList = document.createElement('div');
+        shadeList.className = 'shade-list';
+        shadeList.hidden = true;
+
+        const shadeButton = document.createElement('button');
+        shadeButton.className = 'shade-button';
+        shadeButton.textContent = 'shades';
+
+        shadeButton.addEventListener('click', async () => {
+            if (!shadeList.hidden) {
+                shadeList.hidden = true;
+                return;
+            }
+            try {
+                const key = toHex(colors[i]);
+                let shades = shadeCache.get(key);
+                if (shades) {
+                    cacheShades(key, shades);
+                } else {
+                    shades = await createMonochrome(colors[i]);
+                    cacheShades(key, shades);
+                }
+                shadeList.replaceChildren(...shades.map(shade => {
+                    const s = document.createElement('div');
+                    s.className = 'shade';
+                    s.style.backgroundColor = toRgb(shade);
+                    s.title = toHex(shade);
+                    s.addEventListener('click', () => {
+                        colors[i] = { ...shade, locked: colors[i].locked };
+                        swatch.style.backgroundColor = toRgb(shade);
+                        swatch.title = shade.name.name;
+                        shadeList.hidden = true;
+                    })
+                    return s;
+                }));
+                shadeList.hidden = false;
+            } catch (err) {
+                console.error(err);
+            }
+        })
+
         item.classList.toggle('locked', c.locked);
-        item.append(swatch, lock)
+        item.append(swatch, shadeList, lock, shadeButton);
         container.appendChild(item);
     });
 }
+
+const toHex = c => '#' + c.hex.h.toString(16).padStart(6, '0');
+const toRgb = c => `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`;

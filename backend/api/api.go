@@ -126,8 +126,14 @@ func GetGradientPalette(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, p)
 }
 
-func GetMonochromePalette(c *gin.Context, baseColor color.Color) {
-	var hsls, err = color.Monochromatic(baseColor.Hsl)
+func GetMonochromePalette(c *gin.Context) {
+	var req struct {
+		ColorList []color.Color `json:"color_list"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	}
+	hsls, err := color.Monochromatic(req.ColorList[0].Hsl);
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, err.Error())
 		return
