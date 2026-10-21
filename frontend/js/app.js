@@ -63,10 +63,7 @@ function renderGradient(colors) {
         const item = document.createElement('div');
         item.className = 'palette-item';
 
-        const swatch = document.createElement('div');
-        swatch.className = 'swatch';
-        swatch.style.backgroundColor = `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`;
-        swatch.title = c.name.name;
+        const swatch = renderSwatch(c);
 
         item.append(swatch)
         container.appendChild(item);
@@ -80,10 +77,7 @@ function renderPalette(colors) {
         const item = document.createElement('div');
         item.className = 'palette-item';
 
-        const swatch = document.createElement('div');
-        swatch.className = 'swatch';
-        swatch.style.backgroundColor = `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`;
-        swatch.title = c.name.name;
+        const swatch = renderSwatch(c);
 
         const lock = document.createElement('button');
         lock.className = 'lock';
@@ -140,6 +134,14 @@ function renderPalette(colors) {
         item.append(swatch, shadeList, lock, shadeButton);
         container.appendChild(item);
     });
+}
+
+function renderSwatch(color) {
+    const swatch = document.createElement('div');
+    swatch.className = 'swatch';
+    swatch.style.backgroundColor = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`;
+    swatch.title = color.name.name;
+    return swatch;
 }
 
 const toHex = c => '#' + c.hex.h.toString(16).padStart(6, '0');

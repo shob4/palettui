@@ -226,10 +226,17 @@ func (n name) ToRgb() rgb {
 	return NAMED_COLORS[n.Name]
 }
 
+func Abs(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 func threeNodeDistance(rgb1 rgb, rgb2 rgb) uint32 {
-	var r = (int32(rgb1.R) - int32(rgb2.R))
-	var g = (int32(rgb1.G) - int32(rgb2.G))
-	var b = (int32(rgb1.B) - int32(rgb2.B))
+	var r = Abs(int32(rgb1.R) - int32(rgb2.R))
+	var g = Abs(int32(rgb1.G) - int32(rgb2.G))
+	var b = Abs(int32(rgb1.B) - int32(rgb2.B))
 
 	var distance = r + g + b
 	return uint32(distance)
@@ -378,4 +385,17 @@ func OklchToHsl(color oklch) hsl {
 	}
 	r, g, b := oklchToLinear(color)
 	return srgbToHsl(linearToSrgb(clamp01(r)), linearToSrgb(clamp01(g)), linearToSrgb(clamp01(b)))
+}
+
+func toLab(c hsl) (L, a, b float64) {
+	o := HslToOklch(c)
+	rad := o.H * math.Pi / 180
+	return o.L, o.C * math.Cos(rad), o.C * math.Sin(rad)
+}
+
+func OkDistance(color1, color2 hsl) float64 {
+	L1, a1, b1 := toLab(color1)
+	L2, a2, b2 := toLab(color2)
+	dL, da, db := L1-L2, a1-a2, b1-b2
+	return math.Sqrt(dL * dL + da*da + db*db)
 }

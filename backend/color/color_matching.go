@@ -2,6 +2,7 @@ package color
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"math/rand/v2"
 )
@@ -421,28 +422,35 @@ func jitter(c hsl) hsl {
 	return hsl{H: uint16(h), S: uint16(s), L: uint16(l)}
 }
 
-const minDistance = 300
+const minDistance = 0.06
 
-func farEnough(palette []Color, c Color) bool {
+func getMinDistance(palette []Color, c Color) float64 {
+	var distance float64 = math.Inf(1)
 	for _, p := range palette {
-		if threeNodeDistance(p.Rgb, c.Rgb) < minDistance {
-			return false
-		}
+		fmt.Printf("distance: %f\n", OkDistance(p.Hsl, c.Hsl))
+		distance = math.Min(distance, OkDistance(p.Hsl, c.Hsl))
 	}
-	return true
+	return distance
 }
 
 func addDistinct(palette []Color, base hsl) ([]Color, error) {
-	var last Color
-	for range 6 {
+	var furthestcolor Color
+	var furthestDistance = math.Inf(1)
+	for range 100 {
 		c, err := jitter(base).ToColor()
 		if err != nil {
 			return nil, err
 		}
-		last = c
-		if farEnough(palette, c) {
+		newDistance := getMinDistance(palette, c)
+		if newDistance >= minDistance {
+			fmt.Print("success\n")
 			return append(palette, c), nil
 		}
+		if newDistance > furthestDistance {
+			furthestcolor = c
+			furthestDistance = newDistance
+		}
 	}
-	return append(palette, last), nil
+	fmt.Print("gave up\n")
+	return append(palette, furthestcolor), nil
 }
