@@ -85,13 +85,27 @@ function cacheShades(key, shades) {
     }
 }
 
+let openShadeList = null;
+
+function closeShades() {
+    if (openShadeList) {
+        openShadeList.hidden = true;
+        openShadeList = null;
+    }
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.shade-list, .shade-button')) closeShades();
+})
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeShades();
+})
+
 export function renderGradient(colors) {
     const container = document.getElementById('gradient');
     container.innerHTML = ''; // clear swatches
-    colors.forEach((c, i) => {
-        if (!c.locked) {
-            shadeCache[i] = [];
-        }
+    colors.forEach((c) => {
         const item = document.createElement('div');
         item.className = 'palette-item';
 
@@ -103,6 +117,7 @@ export function renderGradient(colors) {
 }
 
 export function renderPalette(colors) {
+    closeShades();
     const container = document.getElementById('palette');
     container.innerHTML = ''; // clear swatches
     colors.forEach((c, i) => {
@@ -111,10 +126,12 @@ export function renderPalette(colors) {
 
         const swatch = renderSwatch(c);
 
+        const controls = document.createElement('div');
+        controls.className = 'swatch-controls';
+
         const lock = document.createElement('button');
         lock.className = 'lock';
         lock.innerText = c.locked ? 'unlock' : 'lock';
-
         lock.addEventListener('click', () => {
             currentColors[i].locked = !currentColors[i].locked;
             lock.textContent = currentColors[i].locked ? 'unlock' : 'lock';
@@ -129,34 +146,39 @@ export function renderPalette(colors) {
         shadeButton.className = 'shade-button';
         shadeButton.textContent = 'shades';
 
+        function setColor(newColor) {
+            colors[i] = { ...newColor, locked: colors[i].locked };
+            swatch.style.backgroundColor = toRgb(newColor);
+            swatch.title = newColor.name.name;
+            pickerButton.textContent = toHex(newColor);
+        }
+
         shadeButton.addEventListener('click', async () => {
             if (!shadeList.hidden) {
-                shadeList.hidden = true;
+                closeShades();
                 return;
             }
+            closeShades();
             try {
                 const key = toHex(colors[i]);
                 let shades = shadeCache.get(key);
-                if (shades) {
-                    cacheShades(key, shades);
-                } else {
+                if (!shades) {
                     shades = await createMonochrome(colors[i]);
-                    cacheShades(key, shades);
                 }
+                cacheShades(key, shades);
                 shadeList.replaceChildren(...shades.map(shade => {
                     const s = document.createElement('div');
                     s.className = 'shade';
                     s.style.backgroundColor = toRgb(shade);
                     s.title = toHex(shade);
                     s.addEventListener('click', () => {
-                        colors[i] = { ...shade, locked: colors[i].locked };
-                        swatch.style.backgroundColor = toRgb(shade);
-                        swatch.title = shade.name.name;
-                        shadeList.hidden = true;
+                        setColor(shade);
+                        closeShades();
                     })
                     return s;
                 }));
                 shadeList.hidden = false;
+                openShadeList = shadeList;
             } catch (err) {
                 console.error(err);
             }
@@ -178,17 +200,16 @@ export function renderPalette(colors) {
 
         picker.addEventListener('change', async () => {
             try {
-                const picked = await createColor(picker.value);
-                colors[i] = { ...picked, locked: colors[i].locked };
-                swatch.style.backgroundColor = toRgb(picked);
-                swatch.title = picked.name.name;
+                setColor(await createColor(picker.value));
             } catch (err) {
                 console.error(err);
             }
         })
 
         item.classList.toggle('locked', c.locked);
-        item.append(swatch, shadeList, lock, shadeButton, pickerButton, picker);
+        controls.append(lock, shadeButton, pickerButton, picker);
+        swatch.append(controls, shadeList);
+        item.append(swatch);
         container.appendChild(item);
     });
 }
