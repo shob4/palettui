@@ -2,6 +2,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"shob4/palette_site/color"
 	"strconv"
@@ -76,7 +77,7 @@ func GetRandomizePalette(c *gin.Context) {
 func GetGradientPalette(c *gin.Context) {
 	var req struct {
 		StringList []string `json:"color_list"`
-		Num       uint32        `json:"num"`
+		Num        uint32   `json:"num"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -133,7 +134,7 @@ func GetMonochromePalette(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 	}
-	hsls, err := color.Monochromatic(req.ColorList[0].Hsl);
+	hsls, err := color.Monochromatic(req.ColorList[0].Hsl)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, err.Error())
 		return
@@ -148,4 +149,29 @@ func GetMonochromePalette(c *gin.Context) {
 		colors = append(colors, newColor)
 	}
 	c.IndentedJSON(http.StatusOK, colors)
+}
+
+func PostColor(c *gin.Context) {
+	var req struct {
+		HexString string `json:"color"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	}
+	hexString := strings.TrimPrefix(req.HexString, "#")
+	if len(hexString) != 6 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "hex must be 6 characters"})
+		return
+	}
+	n, err := strconv.ParseUint(hexString, 16, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid hex: " + req.HexString})
+		return
+	}
+	newColor, err := color.Hex{H: uint32(n)}.ToRgb().Convert()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, newColor)
 }

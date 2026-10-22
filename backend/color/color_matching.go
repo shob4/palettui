@@ -92,6 +92,8 @@ func analagous(color hsl) (hsl, hsl, error) {
 	return leftColor, rightColor, nil
 }
 
+// returns a monochromatic scale of 10 colors based on the given color
+// errors on color failing to convert to color.Color type
 func Monochromatic(color hsl) ([]hsl, error) {
 	// making sure the color is within bounds
 	if _, err := NewHsl(color.H, color.S, color.L); err != nil {
@@ -130,6 +132,8 @@ func divRoundFloat(n, d float64) float64 {
 	return (n + d/2) / d
 }
 
+// returns a gradient of num length with color and color2 as the endpoints
+// errors if color fails to convert to color.Color type or num less than 1
 func Gradient(color hsl, color2 hsl, num uint32) ([]hsl, error) {
 	if num < 1 {
 		return nil, errors.New("gradients must have at least 1 step")
@@ -210,6 +214,8 @@ func nColorAverageComplement(nodes []Color) (Color, error) {
 	return newColor, nil
 }
 
+// returns a random color.
+// will fail if the color fails to convert to the color.Color type
 func GenerateColor() (Color, error) {
 	var h = rand.IntN(361)
 	var s = rand.IntN(1001)
@@ -221,8 +227,11 @@ func GenerateColor() (Color, error) {
 	return newColor, nil
 }
 
+// returns a new palette of colors, only takes a length
+// errors when a generated color fails to convert to the color.Color type
+// or num is less than 1
 func GeneratePalette(num uint) ([]Color, error) {
-	if num <= 0 {
+	if num < 1 {
 		return nil, errors.New("no numbers to generate")
 	}
 
@@ -311,6 +320,10 @@ func GeneratePalette(num uint) ([]Color, error) {
 	return newPalette, nil
 }
 
+// takes a base palette and returns a new palette. Any unlocked colors are
+// replaced with new ones.
+// errors when a new color fails to convert to the color.Color type or
+// when there is only one color in the palette
 func GeneratePaletteFromBase(currentPalette []Color) ([]Color, error) {
 	var inum = len(currentPalette)
 	if inum < 2 {
@@ -427,7 +440,6 @@ const minDistance = 0.06
 func getMinDistance(palette []Color, c Color) float64 {
 	var distance float64 = math.Inf(1)
 	for _, p := range palette {
-		fmt.Printf("distance: %f\n", OkDistance(p.Hsl, c.Hsl))
 		distance = math.Min(distance, OkDistance(p.Hsl, c.Hsl))
 	}
 	return distance
@@ -443,7 +455,6 @@ func addDistinct(palette []Color, base hsl) ([]Color, error) {
 		}
 		newDistance := getMinDistance(palette, c)
 		if newDistance >= minDistance {
-			fmt.Print("success\n")
 			return append(palette, c), nil
 		}
 		if newDistance > furthestDistance {
@@ -451,6 +462,5 @@ func addDistinct(palette []Color, base hsl) ([]Color, error) {
 			furthestDistance = newDistance
 		}
 	}
-	fmt.Print("gave up\n")
 	return append(palette, furthestcolor), nil
 }

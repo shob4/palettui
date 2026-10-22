@@ -35,3 +35,13 @@ export async function createMonochrome(color) {
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
     return res.json();
 }
+
+export async function createColor(hex) {
+    const res = await fetch(`${BASE_URL}/palette/get-color`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ color: hex })
+    });
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    return res.json();
+}

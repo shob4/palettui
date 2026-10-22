@@ -10,3 +10,4 @@
 .shade-list{ position: absolute; top: 0; left: 0; width: 100%; height: 180px; display: flex; flex-direction: column; border-radius: 4px; overflow: hidden; }
 .shade-list[hidden] { display: none; }
 .shade { flex: 1; cursor: pointer; }
+.picker-input { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }

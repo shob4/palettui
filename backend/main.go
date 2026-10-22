@@ -27,5 +27,6 @@ func main() {
 	router.POST("/palette/gradient", api.GetGradientPalette)
 	router.POST("/palette/create-monochrome", api.GetMonochromePalette)
 	router.POST("/palette", api.PostPalette)
+	router.POST("/palette/get-color", api.PostColor)
 	router.Run("localhost:8080")
 }
