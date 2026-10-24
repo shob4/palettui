@@ -2,6 +2,7 @@ package color
 
 import (
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -82,6 +83,19 @@ func (r rgb) Convert() (Color, error) {
 
 	var name = name{Name: n}
 
+	var okColor = HslToOklch(hsl)
+	if okColor.L > 0.6 {
+		okColor.L = 0.2
+	} else {
+		okColor.L = 0.97
+	}
+	okColor.C *= 0.3
+	var textRgb, err = OklchToHsl(okColor).ToRgb()
+	if err != nil {
+		return Color{}, err
+	}
+	var textHex = fmt.Sprintf("#%02x%02x%02x", textRgb.R, textRgb.G, textRgb.B)
+
 	return Color{
 		Rgb:    r,
 		Hsl:    hsl,
@@ -89,6 +103,7 @@ func (r rgb) Convert() (Color, error) {
 		Hex:    hex,
 		Name:   name,
 		Locked: false,
+		TextColor: textHex,
 	}, nil
 }
 

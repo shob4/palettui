@@ -2,7 +2,6 @@
 // add add and remove colors
 // info button with popup
 // spacebar generates new colors
-// move buttons into swatches
 // buttons only visible on mouseover
 // show hex and name with color picker button
 import { createMonochrome, createColor, createPalette, createPaletteFromBase, createGradient } from './api.js'
@@ -102,7 +101,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeShades();
 })
 
-export function renderGradient(colors) {
+function renderGradient(colors) {
     const container = document.getElementById('gradient');
     container.innerHTML = ''; // clear swatches
     colors.forEach((c) => {
@@ -116,7 +115,7 @@ export function renderGradient(colors) {
     });
 }
 
-export function renderPalette(colors) {
+function renderPalette(colors) {
     closeShades();
     const container = document.getElementById('palette');
     container.innerHTML = ''; // clear swatches
@@ -206,6 +205,11 @@ export function renderPalette(colors) {
             }
         })
 
+        console.log(colors[i].text_color);
+        lock.style.color = colors[i].text_color;
+        pickerButton.style.color = colors[i].text_color;
+        shadeButton.style.color = colors[i].text_color;
+
         item.classList.toggle('locked', c.locked);
         controls.append(lock, shadeButton, pickerButton, picker);
         swatch.append(controls, shadeList);
@@ -214,7 +218,7 @@ export function renderPalette(colors) {
     });
 }
 
-export function renderSwatch(color) {
+function renderSwatch(color) {
     const swatch = document.createElement('div');
     swatch.className = 'swatch';
     swatch.style.backgroundColor = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`;

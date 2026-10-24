@@ -2,7 +2,6 @@ package color
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"math/rand/v2"
 )

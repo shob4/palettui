@@ -2,7 +2,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"shob4/palette_site/color"
 	"strconv"
@@ -157,6 +156,7 @@ func PostColor(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
 	}
 	hexString := strings.TrimPrefix(req.HexString, "#")
 	if len(hexString) != 6 {

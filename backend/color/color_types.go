@@ -50,22 +50,24 @@ type name struct {
 }
 
 type Color struct {
-	Rgb    rgb  `json:"rgb"`
-	Hsl    hsl  `json:"hsl"`
-	Hsb    hsb  `json:"hsb"`
-	Hex    Hex  `json:"hex"`
-	Name   name `json:"name"`
-	Locked bool `json:"locked"`
+	Rgb       rgb    `json:"rgb"`
+	Hsl       hsl    `json:"hsl"`
+	Hsb       hsb    `json:"hsb"`
+	Hex       Hex    `json:"hex"`
+	Name      name   `json:"name"`
+	Locked    bool   `json:"locked"`
+	TextColor string `json:"text_color"`
 }
 
 // type Kind string
 //
 // const (
-// 	KindPalette Kind = "palette"
-// 	KindGradient Kind = "gradient"
-// 	KindMonochrome Kind = "monochrome"
-// )
 //
+//	KindPalette Kind = "palette"
+//	KindGradient Kind = "gradient"
+//	KindMonochrome Kind = "monochrome"
+//
+// )
 type Palette struct {
 	Colors      []Color `json:"color_list"`
 	ID          uint64  `json:"id"`
